@@ -1078,8 +1078,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const initSmoke = () => {
         embers = [];
-        // Começa com bastante brasas na tela
-        for (let i = 0; i < 40; i++) {
+        // Começa com quantidade equilibrada de brasas na tela
+        for (let i = 0; i < 20; i++) {
             const x = Math.random() * smokeCanvas.width;
             const y = Math.random() * smokeCanvas.height;
             embers.push(new Ember(x, y));
@@ -1102,15 +1102,15 @@ document.addEventListener('DOMContentLoaded', () => {
         smokeCtx.fillStyle = vignetteGradient;
         smokeCtx.fillRect(0, 0, smokeCanvas.width, smokeCanvas.height);
         
-        // Adiciona MUITAS brasas com alta frequência
-        if (Math.random() < 0.35) { // 35% de chance - MUITO mais frequente
+        // Adiciona brasas com frequência equilibrada
+        if (Math.random() < 0.18) { // 18% de chance - frequência moderada
             const x = Math.random() * smokeCanvas.width;
             const y = smokeCanvas.height + Math.random() * 100 + 50;
             
             // Cria múltiplas brasas de uma vez (clusters)
             const clusterSize = Math.floor(Math.random() * 3) + 1; // 1 a 3 brasas por vez
             for (let i = 0; i < clusterSize; i++) {
-                if (embers.length < 150) { // Permite até 150 brasas simultâneas
+                if (embers.length < 75) { // Permite até 75 brasas simultâneas
                     embers.push(new Ember(
                         x + (Math.random() - 0.5) * 30,
                         y + (Math.random() - 0.5) * 20
