@@ -523,12 +523,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // Para animações anteriores
         stopParticles();
         stopFog();
+        stopSmoke();
         
         // Inicia animação do tema
         if (theme === 'particles') {
             initParticles();
         } else if (theme === 'darkfog') {
             initFog();
+        } else if (theme === 'dark') {
+            initSmoke();
         }
         
         if (!skipSave) {
@@ -773,6 +776,139 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         fogCtx.clearRect(0, 0, fogCanvas.width, fogCanvas.height);
         fogClouds = [];
+    };
+    
+    // --- SISTEMA DE FUMAÇA (DARK THEME) ---
+    const smokeCanvas = document.getElementById('smoke-canvas');
+    const smokeCtx = smokeCanvas.getContext('2d');
+    let smokePuffs = [];
+    let smokeAnimationId = null;
+    
+    smokeCanvas.width = window.innerWidth;
+    smokeCanvas.height = window.innerHeight;
+    
+    window.addEventListener('resize', () => {
+        smokeCanvas.width = window.innerWidth;
+        smokeCanvas.height = window.innerHeight;
+    });
+    
+    class SmokePuff {
+        constructor(x, y) {
+            this.x = x || Math.random() * smokeCanvas.width;
+            this.y = y || smokeCanvas.height + 50;
+            this.radius = Math.random() * 40 + 30;
+            this.speedY = -(Math.random() * 0.5 + 0.3); // Sobe
+            this.speedX = (Math.random() - 0.5) * 0.5; // Deriva lateral
+            this.opacity = Math.random() * 0.3 + 0.2;
+            this.maxOpacity = this.opacity;
+            this.life = 0;
+            this.maxLife = Math.random() * 300 + 200;
+            this.rotation = Math.random() * Math.PI * 2;
+            this.rotationSpeed = (Math.random() - 0.5) * 0.02;
+            this.expansion = Math.random() * 0.15 + 0.1;
+        }
+        
+        update() {
+            // Movimento
+            this.y += this.speedY;
+            this.x += this.speedX;
+            this.rotation += this.rotationSpeed;
+            
+            // Ondulação lateral
+            this.x += Math.sin(this.life * 0.02) * 0.3;
+            
+            // Expansão
+            this.radius += this.expansion;
+            
+            // Vida e dissipação
+            this.life++;
+            
+            // Fade in inicial
+            if (this.life < 30) {
+                this.opacity = (this.life / 30) * this.maxOpacity;
+            }
+            // Fade out gradual
+            else if (this.life > this.maxLife * 0.6) {
+                const fadeProgress = (this.life - this.maxLife * 0.6) / (this.maxLife * 0.4);
+                this.opacity = this.maxOpacity * (1 - fadeProgress);
+            }
+            
+            // Desacelera conforme sobe
+            this.speedY *= 0.995;
+        }
+        
+        draw() {
+            smokeCtx.save();
+            smokeCtx.translate(this.x, this.y);
+            smokeCtx.rotate(this.rotation);
+            
+            // Gradiente radial para fumaça
+            const gradient = smokeCtx.createRadialGradient(0, 0, 0, 0, 0, this.radius);
+            
+            gradient.addColorStop(0, `rgba(80, 80, 80, ${this.opacity})`);
+            gradient.addColorStop(0.3, `rgba(60, 60, 60, ${this.opacity * 0.7})`);
+            gradient.addColorStop(0.6, `rgba(40, 40, 40, ${this.opacity * 0.4})`);
+            gradient.addColorStop(1, `rgba(30, 30, 30, 0)`);
+            
+            smokeCtx.fillStyle = gradient;
+            smokeCtx.beginPath();
+            smokeCtx.arc(0, 0, this.radius, 0, Math.PI * 2);
+            smokeCtx.fill();
+            
+            smokeCtx.restore();
+        }
+        
+        isDead() {
+            return this.life >= this.maxLife || this.y < -this.radius || this.opacity <= 0;
+        }
+    }
+    
+    const initSmoke = () => {
+        smokePuffs = [];
+        // Cria algumas baforadas iniciais
+        for (let i = 0; i < 10; i++) {
+            const x = Math.random() * smokeCanvas.width;
+            const y = smokeCanvas.height - Math.random() * 200;
+            smokePuffs.push(new SmokePuff(x, y));
+        }
+        animateSmoke();
+    };
+    
+    const animateSmoke = () => {
+        smokeCtx.clearRect(0, 0, smokeCanvas.width, smokeCanvas.height);
+        
+        // Adiciona novas baforadas de fumaça periodicamente
+        if (Math.random() < 0.05) { // 5% de chance por frame
+            const x = Math.random() * smokeCanvas.width;
+            smokePuffs.push(new SmokePuff(x, smokeCanvas.height + 50));
+        }
+        
+        // Atualiza e desenha baforadas
+        smokePuffs.forEach((puff, index) => {
+            puff.update();
+            puff.draw();
+            
+            // Remove baforadas mortas
+            if (puff.isDead()) {
+                smokePuffs.splice(index, 1);
+            }
+        });
+        
+        // Mantém um número razoável de baforadas
+        if (smokePuffs.length > 30) {
+            smokePuffs.shift(); // Remove a mais antiga
+        }
+        
+        smokeAnimationId = requestAnimationFrame(animateSmoke);
+    };
+    
+    const stopSmoke = () => {
+        if (smokeAnimationId) {
+            cancelAnimationFrame(smokeAnimationId);
+            smokeAnimationId = null;
+        }
+        smokeCtx.clearRect(0, 0, smokeCanvas.width, smokeCanvas.height);
+        smokePuffs = [];
     };
 
     // --- INICIALIZAÇÃO ---

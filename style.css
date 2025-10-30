@@ -67,11 +67,24 @@ body.theme-light .theme-indicator {
     color: #1a1a1a;
 }
 
-/* TEMA: Escuro Profundo */
+/* TEMA: Escuro Profundo (com fumaça) */
 body.theme-dark {
     background: linear-gradient(135deg, #0d0d0d 0%, #1a1a1a 50%, #0d0d0d 100%);
-    background-image: radial-gradient(circle at 20% 50%, rgba(30, 30, 30, 0.8) 0%, transparent 50%),
-                      radial-gradient(circle at 80% 50%, rgba(30, 30, 30, 0.8) 0%, transparent 50%);
+    background-image: none;
+}
+
+#smoke-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    display: none;
+}
+
+body.theme-dark #smoke-canvas {
+    display: block;
 }
 
 /* TEMA: Dark Fog (Névoa Escura Interativa) */
