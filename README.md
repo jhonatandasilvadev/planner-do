@@ -60,25 +60,87 @@ Esta combinação permite que você organize visualmente seus afazeres, metas e 
 
 ### Instalação
 
-#### Opção 1: Executável (Recomendado)
-1. Baixe o executável na seção [Releases](https://github.com/jhonatandasilvadev/planner-do/releases)
-2. Execute `Planner do John.exe` (versão portable)
-3. Ou instale usando `Planner do John Setup.exe`
+#### Opção 1: Executável Pronto (Recomendado para uso diário)
+1. Acesse a seção [Releases](https://github.com/jhonatandasilvadev/planner-do/releases)
+2. Baixe a versão mais recente:
+   - **`Planner do John.exe`** - Versão portable (não precisa instalar, só executar)
+   - **`Planner do John Setup.exe`** - Instalador completo
+3. Execute o arquivo baixado
+4. Pronto! O app está rodando 🎉
 
-#### Opção 2: Desenvolvimento
+#### Opção 2: Rodar do Código-Fonte (Para desenvolvedores)
+
+**Passo 1: Clone o repositório**
 ```bash
-# Clone o repositório
 git clone https://github.com/jhonatandasilvadev/planner-do.git
+```
+
+**Passo 2: Entre na pasta do projeto**
+```bash
 cd planner-do
+```
 
-# Instale as dependências
+**Passo 3: Instale as dependências**
+```bash
 npm install
+```
+*Isso vai baixar o Electron e todas as dependências necessárias (~200MB)*
 
-# Execute em modo desenvolvimento
+**Passo 4: Execute em modo desenvolvimento**
+
+**Opção A - Linha de comando:**
+```bash
 npm start
+```
 
-# Compile para Windows
+**Opção B - Scripts prontos (Windows):**
+- Duplo clique em **`dev-start.bat`**
+
+O aplicativo vai abrir automaticamente! ✨
+
+#### Opção 3: Compilar seu Próprio Executável
+
+Se você fez modificações e quer gerar seu próprio `.exe`:
+
+**Método Rápido (Windows):**
+1. Duplo clique em **`install-and-build.bat`**
+2. Aguarde a compilação (~5-10 minutos)
+3. Os executáveis estarão em **`dist/`**
+
+**Método Manual:**
+```bash
+# Compilar tudo (instalador + portable)
 npm run build
+
+# Apenas versão portable
+npm run build-portable
+```
+
+**📂 Onde encontrar os arquivos compilados:**
+```
+planner-do/
+└── dist/
+    ├── Planner do John Setup.exe    (Instalador - ~80MB)
+    └── Planner do John.exe           (Portable - ~150MB)
+```
+
+### 📁 Estrutura do Projeto
+
+```
+planner-do/
+├── index.html              ← Interface principal do app
+├── style.css               ← Estilos e temas
+├── script.js               ← Toda a lógica JavaScript
+├── main.js                 ← Configuração do Electron
+├── package.json            ← Dependências e scripts
+├── README.md               ← Este arquivo
+├── LICENSE                 ← Licença MIT
+├── dev-start.bat           ← Atalho: iniciar em modo dev
+├── install-and-build.bat   ← Atalho: instalar e compilar
+├── LEIA-ME.md              ← Documentação em PT-BR
+├── COMPILAR.txt            ← Guia de compilação rápido
+├── node_modules/           ← Dependências (gerado após npm install)
+└── dist/                   ← Executáveis (gerado após npm run build)
 ```
 
 ### Primeiros Passos
@@ -187,17 +249,44 @@ Roxo vibrante com efeitos neon. Para quem prefere cores intensas e modernas.
 
 ## 📦 Build e Distribuição
 
+### Scripts Disponíveis
+
 ```bash
-# Gerar instalador Windows (NSIS)
+# Modo desenvolvimento (abre o app direto)
+npm start
+
+# Compilar instalador + portable
 npm run build
 
-# Gerar apenas versão portable
+# Compilar apenas portable
 npm run build-portable
-
-# Os arquivos estarão em:
-# - dist/Planner do John Setup.exe (instalador)
-# - dist/Planner do John.exe (portable)
 ```
+
+### Arquivos Gerados
+
+Após compilar, você terá:
+
+```
+dist/
+├── Planner do John Setup.exe    ← Instalador NSIS (~80MB)
+│   └── Instala em: C:\Program Files\Planner do John\
+│
+└── Planner do John.exe           ← Versão Portable (~150MB)
+    └── Roda de qualquer pasta, sem instalação
+```
+
+### Requisitos de Sistema
+
+- **Sistema Operacional**: Windows 10 ou superior (64-bit)
+- **RAM**: Mínimo 2GB, recomendado 4GB
+- **Espaço em Disco**: 200MB livres
+- **Resolução**: Mínimo 1280x720
+
+### Para Desenvolvimento
+
+- **Node.js**: Versão 16 ou superior
+- **NPM**: Versão 7 ou superior
+- **Git**: Para clonar o repositório
 
 ## 🤝 Contribuindo
 
