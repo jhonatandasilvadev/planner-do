@@ -338,7 +338,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (action === 'drag') {
             activeCard.classList.remove('dragging');
-            // Removido o snap to grid para arrastar suavemente
+            // Mantém posição suave sem snap
+        } else if (action === 'resize') {
+            // Snap to grid no redimensionamento
+            const currentWidth = parseFloat(activeCard.style.width);
+            const currentHeight = parseFloat(activeCard.style.height);
+            
+            const snappedWidth = Math.round(currentWidth / GRID_SIZE) * GRID_SIZE;
+            const snappedHeight = Math.round(currentHeight / GRID_SIZE) * GRID_SIZE;
+            
+            activeCard.style.width = `${snappedWidth}px`;
+            activeCard.style.height = `${snappedHeight}px`;
         }
         
         activeCard = null;
@@ -491,6 +501,7 @@ document.addEventListener('DOMContentLoaded', () => {
             'particles': 'Partículas Verdes',
             'light': 'Claro',
             'dark': 'Escuro Profundo',
+            'darkfog': 'Dark Fog',
             'neon': 'Neon',
             'synthwave': 'Synthwave'
         };
@@ -499,7 +510,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const applyTheme = (theme, skipSave = false) => {
         // Remove todos os temas
-        document.body.classList.remove('theme-particles', 'theme-light', 'theme-dark', 'theme-neon', 'theme-synthwave');
+        document.body.classList.remove('theme-particles', 'theme-light', 'theme-dark', 'theme-darkfog', 'theme-neon', 'theme-synthwave');
         
         // Aplica o novo tema
         if (theme !== 'default') {
@@ -509,11 +520,15 @@ document.addEventListener('DOMContentLoaded', () => {
         currentTheme = theme;
         updateThemeIndicator();
         
-        // Inicia ou para as partículas
+        // Para animações anteriores
+        stopParticles();
+        stopFog();
+        
+        // Inicia animação do tema
         if (theme === 'particles') {
             initParticles();
-        } else {
-            stopParticles();
+        } else if (theme === 'darkfog') {
+            initFog();
         }
         
         if (!skipSave) {
@@ -636,6 +651,128 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         particles = [];
+    };
+    
+    // --- SISTEMA DE NÉVOA INTERATIVA (DARK FOG) ---
+    const fogCanvas = document.getElementById('fog-canvas');
+    const fogCtx = fogCanvas.getContext('2d');
+    let fogClouds = [];
+    let fogAnimationId = null;
+    let mouseX = 0;
+    let mouseY = 0;
+    
+    fogCanvas.width = window.innerWidth;
+    fogCanvas.height = window.innerHeight;
+    
+    window.addEventListener('resize', () => {
+        fogCanvas.width = window.innerWidth;
+        fogCanvas.height = window.innerHeight;
+    });
+    
+    // Rastreamento do mouse
+    document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+    });
+    
+    class FogCloud {
+        constructor() {
+            this.x = Math.random() * fogCanvas.width;
+            this.y = Math.random() * fogCanvas.height;
+            this.radius = Math.random() * 150 + 100;
+            this.baseSpeedX = (Math.random() - 0.5) * 0.3;
+            this.baseSpeedY = (Math.random() - 0.5) * 0.3;
+            this.speedX = this.baseSpeedX;
+            this.speedY = this.baseSpeedY;
+            this.opacity = Math.random() * 0.15 + 0.05;
+            this.pulseSpeed = Math.random() * 0.003 + 0.001;
+            this.pulseOffset = Math.random() * Math.PI * 2;
+        }
+        
+        update() {
+            // Movimento base
+            this.x += this.speedX;
+            this.y += this.speedY;
+            
+            // Interação com o mouse (afasta a névoa)
+            const dx = this.x - mouseX;
+            const dy = this.y - mouseY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < 200) {
+                const force = (200 - distance) / 200;
+                this.speedX = this.baseSpeedX + (dx / distance) * force * 2;
+                this.speedY = this.baseSpeedY + (dy / distance) * force * 2;
+            } else {
+                // Retorna gradualmente à velocidade base
+                this.speedX += (this.baseSpeedX - this.speedX) * 0.05;
+                this.speedY += (this.baseSpeedY - this.speedY) * 0.05;
+            }
+            
+            // Loop na tela
+            if (this.x < -this.radius) this.x = fogCanvas.width + this.radius;
+            if (this.x > fogCanvas.width + this.radius) this.x = -this.radius;
+            if (this.y < -this.radius) this.y = fogCanvas.height + this.radius;
+            if (this.y > fogCanvas.height + this.radius) this.y = -this.radius;
+            
+            // Efeito de pulsação
+            this.opacity = (Math.sin(Date.now() * this.pulseSpeed + this.pulseOffset) + 1) * 0.07 + 0.03;
+        }
+        
+        draw() {
+            const gradient = fogCtx.createRadialGradient(
+                this.x, this.y, 0,
+                this.x, this.y, this.radius
+            );
+            
+            gradient.addColorStop(0, `rgba(220, 220, 220, ${this.opacity})`);
+            gradient.addColorStop(0.5, `rgba(180, 180, 180, ${this.opacity * 0.5})`);
+            gradient.addColorStop(1, 'rgba(160, 160, 160, 0)');
+            
+            fogCtx.fillStyle = gradient;
+            fogCtx.beginPath();
+            fogCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            fogCtx.fill();
+        }
+    }
+    
+    const initFog = () => {
+        fogClouds = [];
+        // Cria 15 nuvens de névoa
+        for (let i = 0; i < 15; i++) {
+            fogClouds.push(new FogCloud());
+        }
+        animateFog();
+    };
+    
+    const animateFog = () => {
+        fogCtx.clearRect(0, 0, fogCanvas.width, fogCanvas.height);
+        
+        // Fundo com gradiente sutil
+        const bgGradient = fogCtx.createRadialGradient(
+            fogCanvas.width / 2, fogCanvas.height / 2, 0,
+            fogCanvas.width / 2, fogCanvas.height / 2, fogCanvas.width / 2
+        );
+        bgGradient.addColorStop(0, 'rgba(20, 20, 20, 0.3)');
+        bgGradient.addColorStop(1, 'rgba(10, 10, 10, 0.1)');
+        fogCtx.fillStyle = bgGradient;
+        fogCtx.fillRect(0, 0, fogCanvas.width, fogCanvas.height);
+        
+        fogClouds.forEach(cloud => {
+            cloud.update();
+            cloud.draw();
+        });
+        
+        fogAnimationId = requestAnimationFrame(animateFog);
+    };
+    
+    const stopFog = () => {
+        if (fogAnimationId) {
+            cancelAnimationFrame(fogAnimationId);
+            fogAnimationId = null;
+        }
+        fogCtx.clearRect(0, 0, fogCanvas.width, fogCanvas.height);
+        fogClouds = [];
     };
 
     // --- INICIALIZAÇÃO ---
