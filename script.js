@@ -778,15 +778,17 @@ document.addEventListener('DOMContentLoaded', () => {
         fogClouds = [];
     };
     
-    // --- SISTEMA DE FUMAÇA INTERATIVA (DARK THEME) ---
+    // --- SISTEMA DE FUMAÇA CINEMATOGRÁFICA (DARK THEME) ---
     const smokeCanvas = document.getElementById('smoke-canvas');
     const smokeCtx = smokeCanvas.getContext('2d');
     let smokePuffs = [];
+    let embers = []; // Partículas de brasa
     let smokeAnimationId = null;
-    let smokeMouseX = 0;
-    let smokeMouseY = 0;
-    let prevSmokeMouseX = 0;
-    let prevSmokeMouseY = 0;
+    let smokeMouseX = window.innerWidth / 2;
+    let smokeMouseY = window.innerHeight / 2;
+    let prevSmokeMouseX = smokeMouseX;
+    let prevSmokeMouseY = smokeMouseY;
+    let lightPosition = { x: window.innerWidth * 0.3, y: window.innerHeight * 0.2 }; // Fonte de luz
     
     smokeCanvas.width = window.innerWidth;
     smokeCanvas.height = window.innerHeight;
@@ -794,6 +796,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', () => {
         smokeCanvas.width = window.innerWidth;
         smokeCanvas.height = window.innerHeight;
+        lightPosition = { x: window.innerWidth * 0.3, y: window.innerHeight * 0.2 };
     });
     
     // Rastreamento do mouse para fumaça
@@ -804,92 +807,163 @@ document.addEventListener('DOMContentLoaded', () => {
         smokeMouseY = e.clientY;
     });
     
-    class SmokePuff {
+    // Classe para partículas de brasa/ember
+    class Ember {
         constructor(x, y) {
-            this.x = x || Math.random() * smokeCanvas.width;
-            this.y = y || smokeCanvas.height + 50;
-            this.radius = Math.random() * 60 + 40;
-            this.baseSpeedY = -(Math.random() * 0.5 + 0.3); // Sobe
-            this.baseSpeedX = (Math.random() - 0.5) * 0.5; // Deriva lateral
-            this.speedY = this.baseSpeedY;
-            this.speedX = this.baseSpeedX;
-            this.opacity = Math.random() * 0.4 + 0.2;
-            this.maxOpacity = this.opacity;
+            this.x = x;
+            this.y = y;
+            this.speedY = -(Math.random() * 1.5 + 0.5);
+            this.speedX = (Math.random() - 0.5) * 0.8;
+            this.size = Math.random() * 3 + 1;
             this.life = 0;
-            this.maxLife = Math.random() * 400 + 300;
-            this.rotation = Math.random() * Math.PI * 2;
-            this.rotationSpeed = (Math.random() - 0.5) * 0.02;
-            this.expansion = Math.random() * 0.2 + 0.15;
-            this.dispersed = false;
+            this.maxLife = Math.random() * 200 + 100;
+            this.brightness = Math.random() * 0.8 + 0.6;
+            this.flickerSpeed = Math.random() * 0.1 + 0.05;
+            this.color = Math.random() < 0.7 ? 'orange' : 'red';
         }
         
         update() {
-            // Interação com o mouse (dispersa a fumaça)
+            this.y += this.speedY;
+            this.x += this.speedX;
+            this.speedY += 0.01; // Gravidade sutil
+            this.speedX += (Math.random() - 0.5) * 0.1; // Ondulação
+            this.life++;
+            
+            // Flicker (tremulação)
+            this.brightness = 0.6 + Math.sin(this.life * this.flickerSpeed) * 0.4;
+        }
+        
+        draw() {
+            const opacity = 1 - (this.life / this.maxLife);
+            const glowSize = this.size * 4;
+            
+            // Brilho externo
+            const glow = smokeCtx.createRadialGradient(this.x, this.y, 0, this.x, this.y, glowSize);
+            if (this.color === 'orange') {
+                glow.addColorStop(0, `rgba(255, 200, 100, ${opacity * this.brightness})`);
+                glow.addColorStop(0.3, `rgba(255, 150, 50, ${opacity * this.brightness * 0.5})`);
+                glow.addColorStop(1, 'rgba(255, 100, 0, 0)');
+            } else {
+                glow.addColorStop(0, `rgba(255, 100, 50, ${opacity * this.brightness})`);
+                glow.addColorStop(0.3, `rgba(255, 50, 20, ${opacity * this.brightness * 0.5})`);
+                glow.addColorStop(1, 'rgba(200, 0, 0, 0)');
+            }
+            smokeCtx.fillStyle = glow;
+            smokeCtx.fillRect(this.x - glowSize, this.y - glowSize, glowSize * 2, glowSize * 2);
+            
+            // Núcleo brilhante
+            smokeCtx.fillStyle = `rgba(255, 255, 200, ${opacity * this.brightness})`;
+            smokeCtx.beginPath();
+            smokeCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            smokeCtx.fill();
+        }
+        
+        isDead() {
+            return this.life >= this.maxLife;
+        }
+    }
+    
+    class SmokePuff {
+        constructor(x, y) {
+            this.x = x || Math.random() * smokeCanvas.width;
+            this.y = y || smokeCanvas.height + 80;
+            this.radius = Math.random() * 80 + 60; // Muito maior
+            this.baseSpeedY = -(Math.random() * 0.8 + 0.4); // Mais rápido
+            this.baseSpeedX = (Math.random() - 0.5) * 0.8;
+            this.speedY = this.baseSpeedY;
+            this.speedX = this.baseSpeedX;
+            this.opacity = Math.random() * 0.6 + 0.3; // Mais opaco
+            this.maxOpacity = this.opacity;
+            this.life = 0;
+            this.maxLife = Math.random() * 500 + 400;
+            this.rotation = Math.random() * Math.PI * 2;
+            this.rotationSpeed = (Math.random() - 0.5) * 0.03;
+            this.expansion = Math.random() * 0.3 + 0.2; // Mais expansão
+            this.dispersed = false;
+            this.turbulenceOffset = Math.random() * 1000;
+            this.layer = Math.random(); // Profundidade para parallax
+            this.temperature = 1 - (Math.random() * 0.3); // Para variação de cor
+        }
+        
+        update() {
+            // Interação CINEMATOGRÁFICA com o mouse
             const dx = this.x - smokeMouseX;
             const dy = this.y - smokeMouseY;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
-            // Calcula a velocidade do mouse
+            // Velocidade do mouse para efeitos dramáticos
             const mouseVelX = smokeMouseX - prevSmokeMouseX;
             const mouseVelY = smokeMouseY - prevSmokeMouseY;
             const mouseSpeed = Math.sqrt(mouseVelX * mouseVelX + mouseVelY * mouseVelY);
             
-            // Raio de influência aumenta com a velocidade do mouse
-            const influenceRadius = 150 + mouseSpeed * 3;
+            // Raio de influência MUITO maior e dinâmico
+            const influenceRadius = 250 + mouseSpeed * 5 + this.radius * 0.5;
             
             if (distance < influenceRadius) {
-                const force = (influenceRadius - distance) / influenceRadius;
-                const pushStrength = 3 + mouseSpeed * 0.2;
+                const force = Math.pow((influenceRadius - distance) / influenceRadius, 1.5);
+                const pushStrength = 5 + mouseSpeed * 0.5;
                 
-                // Empurra a fumaça para longe do mouse
+                // Dispersão DRAMÁTICA
                 this.speedX += (dx / distance) * force * pushStrength;
                 this.speedY += (dy / distance) * force * pushStrength;
                 
-                // Aumenta rotação quando atingida
-                this.rotationSpeed += (Math.random() - 0.5) * 0.05;
+                // Turbulência aumentada
+                this.rotationSpeed += (Math.random() - 0.5) * 0.1;
+                this.speedX += (Math.random() - 0.5) * 0.5;
                 
-                // Dispersa mais rápido quando atingida
-                if (distance < influenceRadius * 0.5) {
+                // Dispersão intensa quando muito perto
+                if (distance < influenceRadius * 0.4) {
                     this.dispersed = true;
-                    this.expansion += 0.5;
-                    this.opacity *= 0.95; // Dissipa mais rápido
+                    this.expansion += 1.0;
+                    this.opacity *= 0.92;
+                    this.rotationSpeed *= 1.5;
                 }
             } else {
-                // Retorna gradualmente à velocidade base
-                this.speedX += (this.baseSpeedX - this.speedX) * 0.02;
-                this.speedY += (this.baseSpeedY - this.speedY) * 0.02;
-                this.rotationSpeed *= 0.98; // Desacelera rotação
+                // Retorno suave e natural
+                this.speedX += (this.baseSpeedX - this.speedX) * 0.01;
+                this.speedY += (this.baseSpeedY - this.speedY) * 0.01;
+                this.rotationSpeed *= 0.95;
             }
             
-            // Movimento
-            this.y += this.speedY;
+            // Turbulência procedural (Perlin-like noise simulation)
+            const turbulence = Math.sin(this.life * 0.03 + this.turbulenceOffset) * 
+                              Math.cos(this.life * 0.02) * 0.8;
+            this.x += turbulence;
+            this.speedX += turbulence * 0.1;
+            
+            // Movimento com inércia
+            this.y += this.speedY * (1 + this.layer * 0.3); // Parallax
             this.x += this.speedX;
             this.rotation += this.rotationSpeed;
             
-            // Ondulação lateral (menor quando dispersado)
+            // Ondulação lateral complexa
             if (!this.dispersed) {
-                this.x += Math.sin(this.life * 0.02) * 0.5;
+                this.x += Math.sin(this.life * 0.03 + this.turbulenceOffset) * 1.2;
+                this.y += Math.cos(this.life * 0.025) * 0.3;
             }
             
-            // Expansão
-            this.radius += this.expansion;
+            // Expansão volumétrica
+            this.radius += this.expansion * (1 + this.layer * 0.2);
             
-            // Vida e dissipação
+            // Sistema de vida cinematográfico
             this.life++;
             
-            // Fade in inicial
-            if (this.life < 40) {
-                this.opacity = (this.life / 40) * this.maxOpacity;
+            // Fade in suave e longo
+            if (this.life < 60) {
+                this.opacity = Math.pow(this.life / 60, 2) * this.maxOpacity;
             }
-            // Fade out gradual
-            else if (this.life > this.maxLife * 0.5) {
-                const fadeProgress = (this.life - this.maxLife * 0.5) / (this.maxLife * 0.5);
-                this.opacity = this.maxOpacity * (1 - fadeProgress);
+            // Fade out dramático
+            else if (this.life > this.maxLife * 0.4) {
+                const fadeProgress = (this.life - this.maxLife * 0.4) / (this.maxLife * 0.6);
+                this.opacity = this.maxOpacity * Math.pow(1 - fadeProgress, 2);
             }
             
-            // Desacelera conforme sobe (efeito de turbulência)
-            this.speedY *= 0.996;
-            this.speedX *= 0.99;
+            // Física de fluído
+            this.speedY *= 0.994;
+            this.speedX *= 0.98;
+            
+            // Temperatura diminui (esfria)
+            this.temperature *= 0.998;
         }
         
         draw() {
@@ -897,31 +971,78 @@ document.addEventListener('DOMContentLoaded', () => {
             smokeCtx.translate(this.x, this.y);
             smokeCtx.rotate(this.rotation);
             
-            // Gradiente radial para fumaça (mais denso e realista)
-            const gradient = smokeCtx.createRadialGradient(0, 0, 0, 0, 0, this.radius);
+            // ILUMINAÇÃO VOLUMÉTRICA - Calcula luz da fonte
+            const lightDx = lightPosition.x - this.x;
+            const lightDy = lightPosition.y - this.y;
+            const lightDist = Math.sqrt(lightDx * lightDx + lightDy * lightDy);
+            const lightIntensity = Math.max(0, 1 - lightDist / (smokeCanvas.width * 0.6));
             
-            // Cores mais variadas baseadas na vida
+            // Cores cinematográficas baseadas na temperatura e iluminação
             const ageProgress = this.life / this.maxLife;
-            const centerOpacity = this.opacity * (1 - ageProgress * 0.3);
+            const warmth = this.temperature * lightIntensity;
             
-            gradient.addColorStop(0, `rgba(100, 100, 100, ${centerOpacity})`);
-            gradient.addColorStop(0.2, `rgba(80, 80, 80, ${this.opacity * 0.8})`);
-            gradient.addColorStop(0.4, `rgba(60, 60, 60, ${this.opacity * 0.6})`);
-            gradient.addColorStop(0.7, `rgba(40, 40, 40, ${this.opacity * 0.3})`);
-            gradient.addColorStop(1, `rgba(30, 30, 30, 0)`);
+            // Gradiente complexo com MUITAS camadas
+            const gradient = smokeCtx.createRadialGradient(
+                this.radius * 0.1, -this.radius * 0.1, 0,
+                0, 0, this.radius * 1.3
+            );
+            
+            // Centro - mais quente se iluminado
+            const r1 = Math.floor(110 + warmth * 60);
+            const g1 = Math.floor(110 + warmth * 40);
+            const b1 = Math.floor(110 + warmth * 10);
+            gradient.addColorStop(0, `rgba(${r1}, ${g1}, ${b1}, ${this.opacity * 0.9})`);
+            
+            // Camadas intermediárias com variação
+            gradient.addColorStop(0.15, `rgba(${r1-15}, ${g1-15}, ${b1-5}, ${this.opacity * 0.85})`);
+            gradient.addColorStop(0.3, `rgba(${r1-30}, ${g1-30}, ${b1-10}, ${this.opacity * 0.75})`);
+            gradient.addColorStop(0.45, `rgba(${r1-45}, ${g1-40}, ${b1-15}, ${this.opacity * 0.60})`);
+            gradient.addColorStop(0.6, `rgba(${r1-60}, ${g1-55}, ${b1-20}, ${this.opacity * 0.45})`);
+            gradient.addColorStop(0.75, `rgba(${r1-75}, ${g1-70}, ${b1-25}, ${this.opacity * 0.25})`);
+            gradient.addColorStop(0.9, `rgba(${r1-85}, ${g1-80}, ${b1-30}, ${this.opacity * 0.10})`);
+            gradient.addColorStop(1, 'rgba(20, 20, 20, 0)');
             
             smokeCtx.fillStyle = gradient;
             smokeCtx.beginPath();
             smokeCtx.arc(0, 0, this.radius, 0, Math.PI * 2);
             smokeCtx.fill();
             
-            // Adiciona variação turbulenta
-            if (!this.dispersed && this.life > 50) {
-                smokeCtx.globalAlpha = 0.3;
-                smokeCtx.fillStyle = `rgba(70, 70, 70, ${this.opacity * 0.2})`;
-                smokeCtx.beginPath();
-                smokeCtx.arc(this.radius * 0.3, 0, this.radius * 0.6, 0, Math.PI * 2);
-                smokeCtx.fill();
+            // MÚLTIPLAS CAMADAS DE TURBULÊNCIA
+            if (!this.dispersed && this.life > 30) {
+                // Camada 1 - Turbulência interna
+                smokeCtx.globalAlpha = this.opacity * 0.4;
+                const turb1 = smokeCtx.createRadialGradient(
+                    this.radius * 0.25, this.radius * 0.15, 0,
+                    this.radius * 0.25, this.radius * 0.15, this.radius * 0.7
+                );
+                turb1.addColorStop(0, `rgba(${r1-10}, ${g1-10}, ${b1-5}, 0.6)`);
+                turb1.addColorStop(1, 'rgba(40, 40, 40, 0)');
+                smokeCtx.fillStyle = turb1;
+                smokeCtx.fillRect(-this.radius, -this.radius, this.radius * 2, this.radius * 2);
+                
+                // Camada 2 - Redemoinhos
+                smokeCtx.globalAlpha = this.opacity * 0.3;
+                const turb2 = smokeCtx.createRadialGradient(
+                    -this.radius * 0.2, -this.radius * 0.25, 0,
+                    -this.radius * 0.2, -this.radius * 0.25, this.radius * 0.6
+                );
+                turb2.addColorStop(0, `rgba(${r1-20}, ${g1-20}, ${b1-10}, 0.5)`);
+                turb2.addColorStop(1, 'rgba(35, 35, 35, 0)');
+                smokeCtx.fillStyle = turb2;
+                smokeCtx.fillRect(-this.radius, -this.radius, this.radius * 2, this.radius * 2);
+            }
+            
+            // God rays effect (raios de luz volumétrica)
+            if (lightIntensity > 0.3 && this.life > 60 && this.life < this.maxLife * 0.7) {
+                smokeCtx.globalAlpha = lightIntensity * 0.15 * this.opacity;
+                const rayGradient = smokeCtx.createRadialGradient(
+                    lightDx * 0.01, lightDy * 0.01, 0,
+                    lightDx * 0.01, lightDy * 0.01, this.radius * 0.8
+                );
+                rayGradient.addColorStop(0, 'rgba(200, 180, 140, 0.4)');
+                rayGradient.addColorStop(1, 'rgba(150, 140, 120, 0)');
+                smokeCtx.fillStyle = rayGradient;
+                smokeCtx.fillRect(-this.radius, -this.radius, this.radius * 2, this.radius * 2);
             }
             
             smokeCtx.restore();
@@ -944,31 +1065,62 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     const animateSmoke = () => {
-        // Efeito de motion blur sutil
-        smokeCtx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+        // Motion blur CINEMATOGRÁFICO (mais intenso)
+        smokeCtx.fillStyle = 'rgba(0, 0, 0, 0.08)';
         smokeCtx.fillRect(0, 0, smokeCanvas.width, smokeCanvas.height);
         
-        // Adiciona novas baforadas de fumaça periodicamente
-        if (Math.random() < 0.08) { // 8% de chance por frame (mais frequente)
+        // Vignette effect (escurece as bordas)
+        const vignetteGradient = smokeCtx.createRadialGradient(
+            smokeCanvas.width / 2, smokeCanvas.height / 2, smokeCanvas.width * 0.3,
+            smokeCanvas.width / 2, smokeCanvas.height / 2, smokeCanvas.width * 0.7
+        );
+        vignetteGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        vignetteGradient.addColorStop(1, 'rgba(0, 0, 0, 0.3)');
+        smokeCtx.fillStyle = vignetteGradient;
+        smokeCtx.fillRect(0, 0, smokeCanvas.width, smokeCanvas.height);
+        
+        // Adiciona baforadas de fumaça com variação
+        if (Math.random() < 0.12) { // 12% - MUITO mais fumaça
             const x = Math.random() * smokeCanvas.width;
-            smokePuffs.push(new SmokePuff(x, smokeCanvas.height + 50));
+            const y = smokeCanvas.height + Math.random() * 100 + 50;
+            smokePuffs.push(new SmokePuff(x, y));
+            
+            // Chance de adicionar brasas
+            if (Math.random() < 0.3 && embers.length < 50) {
+                embers.push(new Ember(x, y - 20));
+            }
         }
+        
+        // Atualiza e desenha brasas PRIMEIRO (atrás da fumaça)
+        embers.forEach((ember, index) => {
+            ember.update();
+            ember.draw();
+            if (ember.isDead()) {
+                embers.splice(index, 1);
+            }
+        });
+        
+        // Ordena fumaça por profundidade (parallax)
+        smokePuffs.sort((a, b) => b.layer - a.layer);
         
         // Atualiza e desenha baforadas
         smokePuffs.forEach((puff, index) => {
             puff.update();
             puff.draw();
             
-            // Remove baforadas mortas
             if (puff.isDead()) {
                 smokePuffs.splice(index, 1);
             }
         });
         
-        // Mantém um número razoável de baforadas (aumentado para mais densidade)
-        if (smokePuffs.length > 40) {
-            smokePuffs.shift(); // Remove a mais antiga
+        // Densidade cinematográfica (mais fumaça na tela)
+        if (smokePuffs.length > 60) {
+            smokePuffs.shift();
         }
+        
+        // Atualiza posição da luz (segue o mouse sutilmente)
+        lightPosition.x += (smokeMouseX - lightPosition.x) * 0.02;
+        lightPosition.y += (smokeMouseY * 0.3 - lightPosition.y) * 0.02;
         
         smokeAnimationId = requestAnimationFrame(animateSmoke);
     };
