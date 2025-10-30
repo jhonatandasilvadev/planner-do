@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: #34495e; }
+        canvas { border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <canvas id="icon" width="256" height="256"></canvas>
+    <script>
+        const canvas = document.getElementById('icon');
+        const ctx = canvas.getContext('2d');
+        
+        // Fundo
+        ctx.fillStyle = '#34495e';
+        ctx.fillRect(0, 0, 256, 256);
+        
+        // Card 1 (vermelho)
+        ctx.fillStyle = '#e74c3c';
+        ctx.shadowColor = 'rgba(0,0,0,0.3)';
+        ctx.shadowBlur = 10;
+        ctx.shadowOffsetX = 5;
+        ctx.shadowOffsetY = 5;
+        ctx.fillRect(40, 40, 90, 90);
+        
+        // Card 2 (verde)
+        ctx.fillStyle = '#2ecc71';
+        ctx.fillRect(140, 80, 90, 90);
+        
+        // Card 3 (branco)
+        ctx.fillStyle = '#ecf0f1';
+        ctx.fillRect(90, 130, 90, 90);
+        
+        // Salve este canvas como PNG e converta para .ico usando um conversor online
+        console.log('Use um conversor online para transformar este PNG em .ico');
+    </script>
+</body>
+</html>
+

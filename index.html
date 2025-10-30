@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Painel Organizacional</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="navbar-brand">📝 Planner do John</div>
+        <div class="navbar-menu">
+            <div class="navbar-item dropdown">
+                <button class="navbar-btn">Arquivo ▾</button>
+                <div class="dropdown-content">
+                    <button id="new-project-btn">🆕 Novo Projeto</button>
+                    <button id="open-project-btn">📂 Abrir Projeto</button>
+                    <button id="save-project-btn">💾 Salvar Projeto</button>
+                    <button id="save-as-project-btn">💾 Salvar Como...</button>
+                    <button id="export-json-btn">📤 Exportar JSON</button>
+                    <button id="import-json-btn">📥 Importar JSON</button>
+                </div>
+            </div>
+            <div class="navbar-item dropdown">
+                <button class="navbar-btn">Estilos de Card ▾</button>
+                <div class="dropdown-content">
+                    <button class="style-selector" data-style="default">🎨 Default</button>
+                    <button class="style-selector" data-style="glass">✨ Glass</button>
+                    <button class="style-selector" data-style="modern">🌟 Modern</button>
+                </div>
+            </div>
+            <div class="navbar-item dropdown">
+                <button class="navbar-btn">Tema de Fundo ▾</button>
+                <div class="dropdown-content">
+                    <button class="theme-selector" data-theme="default">🌌 Padrão (Cinza)</button>
+                    <button class="theme-selector" data-theme="particles">✨ Partículas Verdes</button>
+                    <button class="theme-selector" data-theme="light">☀️ Claro</button>
+                    <button class="theme-selector" data-theme="dark">🌑 Escuro Profundo</button>
+                    <button class="theme-selector" data-theme="neon">💜 Neon</button>
+                    <button class="theme-selector" data-theme="synthwave">🌆 Synthwave</button>
+                </div>
+            </div>
+            <div class="navbar-item">
+                <span id="current-style-indicator" class="style-indicator">Estilo: <strong>Default</strong></span>
+            </div>
+            <div class="navbar-item">
+                <span id="current-theme-indicator" class="theme-indicator">Tema: <strong>Padrão</strong></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Canvas para partículas (tema particles) -->
+    <canvas id="particles-canvas"></canvas>
+    
+    <div id="main-board"></div>
+    <button id="add-card-btn" title="Adicionar novo card">+</button>
+    
+    <!-- Input oculto para importar arquivos -->
+    <input type="file" id="file-input" accept=".json" style="display: none;">
+    
+    <template id="card-template">
+        <div class="card" style="left: 20px; top: 20px; width: 240px; height: 200px;">
+            
+            <div class="text-format-popup">
+                <button class="text-tool" data-command="bold" title="Negrito"><b>B</b></button>
+                <div class="text-color-palette">
+                    <span class="color-dot" data-color="#000000" title="Preto"></span>
+                    <span class="color-dot" data-color="#FFFFFF" title="Branco"></span>
+                    <span class="color-dot" data-color="#c0392b" title="Vermelho"></span>
+                    <span class="color-dot" data-color="#27ae60" title="Verde"></span>
+                </div>
+            </div>
+
+            <div class="card-header">
+                <h3 class="card-title" contenteditable="true">NOVO CARD</h3>
+                <div class="header-tools">
+                    <button class="text-format-btn" title="Formatar Texto">
+                        <span class="text-icon">T</span>
+                    </button>
+                    <div class="card-colors">
+                        <span class="color-dot" data-color="default" title="Preto (Padrão)"></span>
+                        <span class="color-dot" data-color="white" title="Branco"></span>
+                        <span class="color-dot" data-color="red" title="Vermelho"></span>
+                        <span class="color-dot" data-color="green" title="Verde"></span>
+                    </div>
+                    <button class="delete-btn" title="Excluir card">X</button>
+                </div>
+            </div>
+            <div class="card-content" contenteditable="false"></div>
+            <div class="card-footer">
+                <button class="add-checkbox-btn" title="Adicionar item de checklist">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                    <span>Adicionar Checkbox</span>
+                </button>
+                <div class="drag-handle" title="Arrastar Card">...</div>
+            </div>
+            <div class="resize-handle"></div>
+        </div>
+    </template>
+    <script src="script.js"></script>
+</body>
+</html>

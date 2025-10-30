@@ -1,0 +1,76 @@
+====================================================
+  GUIA DE COMPILAÇÃO - PLANNER DO JOHN
+====================================================
+
+📦 PASSO A PASSO PARA CRIAR O EXECUTÁVEL:
+
+1. OPÇÃO FÁCIL - Use os scripts prontos:
+   
+   a) Duplo clique em: install-and-build.bat
+      (Este script faz tudo automaticamente)
+   
+   OU
+   
+   b) Duplo clique em: dev-start.bat
+      (Para testar antes de compilar)
+
+2. OPÇÃO MANUAL - Via terminal:
+
+   a) Abra o terminal nesta pasta
+   
+   b) Para testar:
+      npm start
+   
+   c) Para compilar:
+      npm run build
+
+====================================================
+
+📁 ONDE FICAM OS ARQUIVOS COMPILADOS:
+
+Após a compilação, os arquivos estarão em:
+  📂 dist/
+
+Você encontrará:
+  ✅ Planner do John Setup.exe (Instalador)
+  ✅ Planner do John.exe (Versão Portable)
+
+====================================================
+
+💾 SOBRE O ARMAZENAMENTO:
+
+✅ Seus dados estão SEGUROS!
+✅ Salvamento AUTOMÁTICO via localStorage
+✅ Dados persistem mesmo após fechar o app
+✅ Nenhuma anotação será perdida
+
+====================================================
+
+🎮 ATALHOS ÚTEIS:
+
+NAVEGAÇÃO E VISUALIZAÇÃO:
+- Ctrl + Arrastar (mouse) = Navegar/mover pela tela
+- Ctrl + Scroll (mouse) = Zoom in/out (30%-300%)
+  * Scroll para cima = Aproximar
+  * Scroll para baixo = Afastar
+
+APLICATIVO:
+- Ctrl + Q = Sair
+- Ctrl + R = Recarregar
+- Ctrl + Shift + I = DevTools
+
+====================================================
+
+❓ PROBLEMAS?
+
+1. Se der erro na compilação:
+   - Delete a pasta node_modules
+   - Execute: npm install
+   - Tente compilar novamente
+
+2. Se o app não abrir:
+   - Verifique se o Windows Defender não bloqueou
+   - Execute como administrador
+
+====================================================
+
